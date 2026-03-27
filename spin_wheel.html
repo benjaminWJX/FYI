@@ -57,31 +57,6 @@
       border: 6px solid #97BC62;
     }
 
-    .wheel-segment {
-      position: absolute;
-      width: 50%;
-      height: 50%;
-      top: 0;
-      right: 0;
-      transform-origin: bottom left;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      clip-path: polygon(0 100%, 100% 0, 100% 100%);
-    }
-
-    .wheel-segment span {
-      position: absolute;
-      font-size: 0.65rem;
-      font-weight: 600;
-      color: white;
-      text-align: center;
-      transform: rotate(67.5deg) translateY(-85px);
-      width: 90px;
-      line-height: 1.2;
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-    }
-
     .pointer {
       position: absolute;
       top: -15px;
@@ -161,25 +136,20 @@
     }
 
     .result-topic {
-      font-size: 1.5rem;
+      font-size: 1.3rem;
       font-weight: 700;
       color: #97BC62;
       margin-bottom: 10px;
       opacity: 0;
       transform: translateY(20px);
       transition: all 0.5s ease;
+      max-width: 320px;
+      line-height: 1.4;
     }
 
     .result-topic.show {
       opacity: 1;
       transform: translateY(0);
-    }
-
-    .result-prompt {
-      font-size: 1rem;
-      opacity: 0.85;
-      max-width: 300px;
-      line-height: 1.5;
     }
 
     .footer {
@@ -188,34 +158,17 @@
       font-size: 0.85rem;
       opacity: 0.7;
     }
-
-    .footer a {
-      color: #97BC62;
-      text-decoration: none;
-    }
-
-    /* Colors for segments */
-    .seg-0 { background: #2C5F2D; }
-    .seg-1 { background: #B85042; }
-    .seg-2 { background: #1E2D2F; }
-    .seg-3 { background: #97BC62; }
-    .seg-4 { background: #3d7a3e; }
-    .seg-5 { background: #a05a4d; }
-    .seg-6 { background: #2a4547; }
-    .seg-7 { background: #7da354; }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>🍌 Ask Me About My Internship!</h1>
+    <h1>Ask Me About My Internship!</h1>
     <p>Spin the wheel to pick a conversation topic</p>
   </div>
 
   <div class="wheel-container">
     <div class="pointer"></div>
-    <div class="wheel" id="wheel">
-      <!-- Segments will be added by JS -->
-    </div>
+    <div class="wheel" id="wheel"></div>
     <div class="center-circle">🎯</div>
   </div>
 
@@ -223,7 +176,6 @@
 
   <div class="result">
     <div class="result-topic" id="resultTopic"></div>
-    <div class="result-prompt" id="resultPrompt"></div>
   </div>
 
   <div class="footer">
@@ -233,62 +185,130 @@
   <script>
     const topics = [
       { 
-        name: "Banana Flavour Creation", 
-        prompt: "Ask me how I created my own banana milk flavour from GC-MS data!" 
+        name: "Banana Flavour", 
+        prompt: "Walk me through your banana flavour creation project." 
       },
       { 
-        name: "Cross-Dept Collaboration", 
-        prompt: "Ask me about working with Beverage, Savoury, and Confectionery teams!" 
+        name: "Biggest Challenge", 
+        prompt: "What was your biggest challenge and how did you overcome it?" 
       },
       { 
-        name: "Problem-Solving", 
-        prompt: "Ask me how I tackled myrcene solubility issues!" 
+        name: "Coursework", 
+        prompt: "How did your coursework prepare you for this role?" 
       },
       { 
-        name: "Learning from Failure", 
-        prompt: "Ask me about my chocolate milk disaster and what I learned!" 
+        name: "Getting the Internship", 
+        prompt: "How did you get your internship?" 
       },
       { 
-        name: "Sensory Methodology", 
-        prompt: "Ask me about running triangle tests for cost validation!" 
+        name: "Memorable Experience", 
+        prompt: "What was your most memorable experience from the internship?" 
       },
       { 
-        name: "Flavour Wash (LLE)", 
-        prompt: "Ask me about liquid-liquid extraction for a passionfruit flavour!" 
+        name: "Greatest Achievement", 
+        prompt: "What was your greatest achievement?" 
       },
       { 
-        name: "Working with Flavourists", 
-        prompt: "Ask me about learning from senior flavourists and handling feedback!" 
+        name: "Learning from Mistakes", 
+        prompt: "What was a mistake you learnt from?" 
       },
       { 
         name: "Why Flavourist?", 
-        prompt: "Ask me about my career aspirations in the flavour industry!" 
+        prompt: "Why are you interested in the flavourist field?" 
+      },
+      { 
+        name: "Interesting Flavour", 
+        prompt: "What was the most interesting flavour you encountered?" 
+      },
+      { 
+        name: "Failed to Compound", 
+        prompt: "What is a flavour you failed to compound?" 
       }
     ];
 
     const wheel = document.getElementById('wheel');
     const spinBtn = document.getElementById('spinBtn');
     const resultTopic = document.getElementById('resultTopic');
-    const resultPrompt = document.getElementById('resultPrompt');
     
     let currentRotation = 0;
     let isSpinning = false;
 
-    // Create wheel segments
+    // Create wheel segments using SVG
     function createWheel() {
-      const segmentAngle = 360 / topics.length;
+      const numSegments = topics.length;
+      const segmentAngle = 360 / numSegments;
+      
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", "0 0 100 100");
+      svg.style.width = "100%";
+      svg.style.height = "100%";
+      svg.style.position = "absolute";
+      svg.style.top = "0";
+      svg.style.left = "0";
+      
+      const colors = [
+        "#2C5F2D", "#B85042", "#1E2D2F", "#97BC62", "#3d7a3e",
+        "#a05a4d", "#2a4547", "#7da354", "#4a8c4b", "#8b5347"
+      ];
       
       topics.forEach((topic, i) => {
-        const segment = document.createElement('div');
-        segment.className = `wheel-segment seg-${i}`;
-        segment.style.transform = `rotate(${i * segmentAngle}deg)`;
+        const startAngle = (i * segmentAngle - 90) * Math.PI / 180;
+        const endAngle = ((i + 1) * segmentAngle - 90) * Math.PI / 180;
         
-        const span = document.createElement('span');
-        span.textContent = topic.name;
-        segment.appendChild(span);
+        const x1 = 50 + 50 * Math.cos(startAngle);
+        const y1 = 50 + 50 * Math.sin(startAngle);
+        const x2 = 50 + 50 * Math.cos(endAngle);
+        const y2 = 50 + 50 * Math.sin(endAngle);
         
-        wheel.appendChild(segment);
+        const largeArc = segmentAngle > 180 ? 1 : 0;
+        
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", `M 50 50 L ${x1} ${y1} A 50 50 0 ${largeArc} 1 ${x2} ${y2} Z`);
+        path.setAttribute("fill", colors[i % colors.length]);
+        svg.appendChild(path);
+        
+        // Add text
+        const textAngle = (i * segmentAngle + segmentAngle / 2 - 90) * Math.PI / 180;
+        const textX = 50 + 32 * Math.cos(textAngle);
+        const textY = 50 + 32 * Math.sin(textAngle);
+        
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", textX);
+        text.setAttribute("y", textY);
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("dominant-baseline", "middle");
+        text.setAttribute("fill", "white");
+        text.setAttribute("font-size", "3");
+        text.setAttribute("font-weight", "600");
+        text.setAttribute("transform", `rotate(${i * segmentAngle + segmentAngle / 2}, ${textX}, ${textY})`);
+        
+        // Split text into lines
+        const words = topic.name.split(' ');
+        if (words.length >= 2) {
+          const mid = Math.ceil(words.length / 2);
+          const line1 = words.slice(0, mid).join(' ');
+          const line2 = words.slice(mid).join(' ');
+          
+          const tspan1 = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+          tspan1.setAttribute("x", textX);
+          tspan1.setAttribute("dy", "-1.5");
+          tspan1.textContent = line1;
+          
+          const tspan2 = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+          tspan2.setAttribute("x", textX);
+          tspan2.setAttribute("dy", "3");
+          tspan2.textContent = line2;
+          
+          text.appendChild(tspan1);
+          text.appendChild(tspan2);
+        } else {
+          text.textContent = topic.name;
+        }
+        
+        svg.appendChild(text);
       });
+      
+      wheel.appendChild(svg);
     }
 
     function spinWheel() {
@@ -297,10 +317,9 @@
       isSpinning = true;
       spinBtn.disabled = true;
       resultTopic.classList.remove('show');
-      resultPrompt.textContent = '';
       
       // Calculate spin
-      const spinDegrees = 1800 + Math.floor(Math.random() * 1440); // 5-9 full rotations
+      const spinDegrees = 1800 + Math.floor(Math.random() * 1440);
       currentRotation += spinDegrees;
       
       wheel.style.transform = `rotate(${currentRotation}deg)`;
@@ -309,13 +328,12 @@
       setTimeout(() => {
         const segmentAngle = 360 / topics.length;
         const normalizedRotation = currentRotation % 360;
-        const pointerAngle = (360 - normalizedRotation + 90) % 360; // Pointer is at top
+        const pointerAngle = (360 - normalizedRotation + 90) % 360;
         const winningIndex = Math.floor(pointerAngle / segmentAngle) % topics.length;
         
         const winner = topics[winningIndex];
         
-        resultTopic.textContent = `🎉 ${winner.name}`;
-        resultPrompt.textContent = winner.prompt;
+        resultTopic.textContent = winner.prompt;
         resultTopic.classList.add('show');
         
         isSpinning = false;
