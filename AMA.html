@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Benjamin's FYI Conversation Starter</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #2C5F2D 0%, #1E2D2F 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: white;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+      color: #97BC62;
+    }
+
+    .header p {
+      font-size: 1rem;
+      opacity: 0.9;
+    }
+
+    .wheel-container {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      margin-bottom: 30px;
+    }
+
+    .wheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4), 0 0 60px rgba(151, 188, 98, 0.3);
+      transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+      border: 6px solid #97BC62;
+    }
+
+    .pointer {
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 18px solid transparent;
+      border-right: 18px solid transparent;
+      border-top: 35px solid #B85042;
+      z-index: 10;
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));
+    }
+
+    .pointer::after {
+      content: '';
+      position: absolute;
+      top: -35px;
+      left: -8px;
+      width: 16px;
+      height: 16px;
+      background: #B85042;
+      border-radius: 50%;
+    }
+
+    .center-circle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #2C5F2D, #1E2D2F);
+      border-radius: 50%;
+      border: 4px solid #97BC62;
+      z-index: 5;
+    }
+
+    .spin-btn {
+      background: linear-gradient(135deg, #B85042, #943d33);
+      color: white;
+      border: none;
+      padding: 16px 50px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 20px rgba(184, 80, 66, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .spin-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(184, 80, 66, 0.5);
+    }
+
+    .spin-btn:active {
+      transform: translateY(0);
+    }
+
+    .spin-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .result {
+      margin-top: 30px;
+      text-align: center;
+      min-height: 120px;
+    }
+
+    .result-topic {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #97BC62;
+      margin-bottom: 10px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.5s ease;
+      max-width: 320px;
+      line-height: 1.4;
+    }
+
+    .result-topic.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .footer {
+      margin-top: 30px;
+      text-align: center;
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Ask Me About My Internship!</h1>
+    <p>Spin the wheel to pick a conversation topic</p>
+  </div>
+
+  <div class="wheel-container">
+    <div class="pointer"></div>
+    <div class="wheel" id="wheel"></div>
+    <div class="center-circle"></div>
+  </div>
+
+  <button class="spin-btn" id="spinBtn" onclick="spinWheel()">Spin!</button>
+
+  <div class="result">
+    <div class="result-topic" id="resultTopic"></div>
+  </div>
+
+  <div class="footer">
+    <p>Benjamin Wee | FST Industry Day 2026</p>
+  </div>
+
+  <script>
+    const topics = [
+      { prompt: "Walk me through your banana flavour creation project." },
+      { prompt: "What was your biggest challenge and how did you overcome it?" },
+      { prompt: "How did your coursework prepare you for this role?" },
+      { prompt: "How did you get your internship?" },
+      { prompt: "What was your most memorable experience from the internship?" },
+      { prompt: "What was your greatest achievement?" },
+      { prompt: "What was a mistake you learnt from?" },
+      { prompt: "Why are you interested in the flavourist field?" },
+      { prompt: "What was the most interesting flavour you encountered?" },
+      { prompt: "What is a flavour you failed to compound?" }
+    ];
+
+    const wheel = document.getElementById('wheel');
+    const spinBtn = document.getElementById('spinBtn');
+    const resultTopic = document.getElementById('resultTopic');
+    
+    let currentRotation = 0;
+    let isSpinning = false;
+
+    // Create wheel segments using SVG (no text)
+    function createWheel() {
+      const numSegments = topics.length;
+      const segmentAngle = 360 / numSegments;
+      
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", "0 0 100 100");
+      svg.style.width = "100%";
+      svg.style.height = "100%";
+      svg.style.position = "absolute";
+      svg.style.top = "0";
+      svg.style.left = "0";
+      
+      const colors = [
+        "#2C5F2D", "#B85042", "#1E2D2F", "#97BC62", "#3d7a3e",
+        "#a05a4d", "#2a4547", "#7da354", "#4a8c4b", "#8b5347"
+      ];
+      
+      topics.forEach((topic, i) => {
+        const startAngle = (i * segmentAngle - 90) * Math.PI / 180;
+        const endAngle = ((i + 1) * segmentAngle - 90) * Math.PI / 180;
+        
+        const x1 = 50 + 50 * Math.cos(startAngle);
+        const y1 = 50 + 50 * Math.sin(startAngle);
+        const x2 = 50 + 50 * Math.cos(endAngle);
+        const y2 = 50 + 50 * Math.sin(endAngle);
+        
+        const largeArc = segmentAngle > 180 ? 1 : 0;
+        
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", `M 50 50 L ${x1} ${y1} A 50 50 0 ${largeArc} 1 ${x2} ${y2} Z`);
+        path.setAttribute("fill", colors[i % colors.length]);
+        svg.appendChild(path);
+      });
+      
+      wheel.appendChild(svg);
+    }
+
+    function spinWheel() {
+      if (isSpinning) return;
+      
+      isSpinning = true;
+      spinBtn.disabled = true;
+      resultTopic.classList.remove('show');
+      
+      // Calculate spin
+      const spinDegrees = 1800 + Math.floor(Math.random() * 1440);
+      currentRotation += spinDegrees;
+      
+      wheel.style.transform = `rotate(${currentRotation}deg)`;
+      
+      // Determine result after spin
+      setTimeout(() => {
+        const segmentAngle = 360 / topics.length;
+        const normalizedRotation = currentRotation % 360;
+        const pointerAngle = (360 - normalizedRotation + 90) % 360;
+        const winningIndex = Math.floor(pointerAngle / segmentAngle) % topics.length;
+        
+        const winner = topics[winningIndex];
+        
+        resultTopic.textContent = winner.prompt;
+        resultTopic.classList.add('show');
+        
+        isSpinning = false;
+        spinBtn.disabled = false;
+      }, 4200);
+    }
+
+    // Initialize
+    createWheel();
+  </script>
+</body>
+</html>
